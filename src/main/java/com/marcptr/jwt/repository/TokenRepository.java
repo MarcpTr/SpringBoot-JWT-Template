@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 import org.springframework.security.access.AccessDeniedException;
+
 public interface TokenRepository extends JpaRepository<Token, UUID> {
         Optional<Token> findByJti(String jti);
 
@@ -28,5 +29,8 @@ public interface TokenRepository extends JpaRepository<Token, UUID> {
                         TokenType tokenType);
 
         void deleteAllByUser_Id(UUID userId);
-        
+
+        long countByTokenTypeAndExpiredFalseAndRevokedFalse(TokenType tokenType);
+
+        long countByTokenType(TokenType tokenType);
 }

@@ -150,5 +150,26 @@ public class TokenService {
 
         tokenRepository.saveAll(activeRefreshTokens);
     }
-    
+
+    @Transactional
+    public void revokeSessionForUser(UUID userId, UUID tokenId) {
+
+        Token token = tokenRepository.findById(tokenId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        ErrorCode.RESOURCE_NOT_FOUND,
+                        Map.of("error", "Session not found")));
+
+        if (!token.getUser().getId().equals(userId)
+                || token.getTokenType() != TokenType.REFRESH) {
+            throw new ResourceNotFoundException(
+                    ErrorCode.RESOURCE_NOT_FOUND,
+                    Map.of("error", "Session not found"));
+        }
+
+        token.setExpired(true);
+        token.setRevoked(true);
+
+        tokenRepository.save(token);
+    }
+
 }

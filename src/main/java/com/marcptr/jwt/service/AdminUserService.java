@@ -22,7 +22,8 @@ import com.marcptr.jwt.model.enums.Role;
 import org.springframework.security.access.AccessDeniedException;
 import java.util.List;
 import java.util.UUID;
-
+import com.marcptr.jwt.dto.response.ActiveSessionResponse;
+import java.util.List;
 import com.marcptr.jwt.repository.TokenRepository;
 import com.marcptr.jwt.dto.request.CreateUserRequest;
 import com.marcptr.jwt.exception.ResourceAlreadyExistsException;
@@ -226,42 +227,57 @@ public class AdminUserService {
                 return AdminUserResponse.fromEntity(updatedUser);
         }
 
-@Transactional
-public void deleteUser(UUID id, UUID currentAdminId) {
+        @Transactional
+        public void deleteUser(UUID id, UUID currentAdminId) {
 
-   
-    if (id.equals(currentAdminId)) {
-        throw new AccessDeniedException(
-                "Administrators cannot delete their own account"
-        );
-    }
+                if (id.equals(currentAdminId)) {
+                        throw new AccessDeniedException(
+                                        "Administrators cannot delete their own account");
+                }
 
+                List<User> administrators = userRepository.findAllByRoleForUpdate(Role.ROLE_ADMIN);
 
-    List<User> administrators =
-            userRepository.findAllByRoleForUpdate(Role.ROLE_ADMIN);
+                User user = userRepository.findByIdForUpdate(id)
+                                .orElseThrow(() -> new ResourceNotFoundException(
+                                                ErrorCode.USER_NOT_FOUND));
 
-    User user = userRepository.findByIdForUpdate(id)
-            .orElseThrow(() -> new ResourceNotFoundException(
-                    ErrorCode.USER_NOT_FOUND
-            ));
+                if (user.getRole() == Role.ROLE_ADMIN && user.isEnabled()) {
 
-    if (user.getRole() == Role.ROLE_ADMIN && user.isEnabled()) {
+                        long enabledAdministrators = administrators.stream()
+                                        .filter(User::isEnabled)
+                                        .count();
 
-        long enabledAdministrators = administrators.stream()
-                .filter(User::isEnabled)
-                .count();
+                        if (enabledAdministrators <= 1) {
+                                throw new LastAdminException();
+                        }
+                }
 
-        if (enabledAdministrators <= 1) {
-            throw new LastAdminException();
+                tokenService.revokeAllUserTokens(user);
+
+                tokenRepository.deleteAllByUser_Id(user.getId());
+
+                userRepository.delete(user);
         }
-    }
 
- 
-    tokenService.revokeAllUserTokens(user);
+        public List<ActiveSessionResponse> getUserSessions(UUID userId) {
+                User user = userRepository.findById(userId)
+                                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND));
 
-    tokenRepository.deleteAllByUser_Id(user.getId());
+                return tokenService.getActiveSessions(user);
+        }
 
-    userRepository.delete(user);
-}
+        public void revokeUserSession(UUID userId, UUID sessionId) {
+                User user = userRepository.findById(userId)
+                                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND));
+
+                tokenService.revokeSessionForUser(user.getId(), sessionId);
+        }
+
+        public void revokeAllUserSessions(UUID userId) {
+                User user = userRepository.findById(userId)
+                                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND));
+
+                tokenService.revokeAllUserTokens(user);
+        }
 
 }
