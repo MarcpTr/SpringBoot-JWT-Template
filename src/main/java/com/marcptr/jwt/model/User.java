@@ -1,3 +1,4 @@
+
 package com.marcptr.jwt.model;
 
 import jakarta.persistence.*;
@@ -6,7 +7,9 @@ import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+
 import com.marcptr.jwt.model.enums.Role;
+
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
@@ -23,7 +26,7 @@ public class User implements UserDetails {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    private UUID  id;
+    private UUID id;
 
     @NotBlank
     @Column(nullable = false, unique = true)
@@ -37,12 +40,17 @@ public class User implements UserDetails {
     @NotBlank
     @Column(nullable = false)
     private String password;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
 
     @Column(name = "created_at", nullable = false)
     private LocalDateTime createdAt;
+
+    @Builder.Default
+    @Column(nullable = false, columnDefinition = "boolean default true")
+    private boolean enabled = true;
 
     @PrePersist
     protected void onCreate() {
@@ -71,6 +79,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return enabled;
     }
 }
