@@ -3,10 +3,13 @@ package com.marcptr.jwt;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
-@SpringBootApplication
-public class JwtRefreshAuthApplication  {
+import org.springframework.data.web.config.EnableSpringDataWebSupport;
+import org.springframework.data.web.config.EnableSpringDataWebSupport.PageSerializationMode;
 
-	public static void main(String[] args) {
-		SpringApplication.run(JwtRefreshAuthApplication .class, args);
-	}
+@SpringBootApplication
+@EnableSpringDataWebSupport(pageSerializationMode = PageSerializationMode.VIA_DTO)
+public class JwtRefreshAuthApplication {
+    public static void main(String[] args) {
+        SpringApplication.run(JwtRefreshAuthApplication.class, args);
+    }
 }

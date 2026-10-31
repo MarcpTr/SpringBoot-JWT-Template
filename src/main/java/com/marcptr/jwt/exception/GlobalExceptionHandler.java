@@ -140,7 +140,22 @@ public class GlobalExceptionHandler {
                                 .body(ApiResponse.fail(errorCode, messageResolver.resolveMessage(errorCode),
                                                 null));
         }
+
         // Custom Exceptions
+        @ExceptionHandler(LastAdminException.class)
+        public ResponseEntity<ApiResponse<Map<String, String>>> handleLastAdmin(
+                        LastAdminException ex) {
+
+                String message = messageResolver.resolveMessage(ex.getCode());
+
+                ApiError<Object> error = new ApiError<>(
+                                ex.getCode(),
+                                message,
+                                ex.getDetails());
+
+                return ResponseEntity.status(HttpStatus.CONFLICT)
+                                .body(ApiResponse.fail(error));
+        }
 
         @ExceptionHandler(InvalidCredentialsException.class)
         public ResponseEntity<ApiResponse<Void>> handleInvalidCredentials(
