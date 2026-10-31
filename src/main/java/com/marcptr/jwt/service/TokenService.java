@@ -16,6 +16,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -88,10 +89,11 @@ public class TokenService {
     public void revokeSession(User user, UUID tokenId) {
 
         Token token = tokenRepository.findById(tokenId)
-                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.RESOURCE_NOT_FOUND,
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        ErrorCode.RESOURCE_NOT_FOUND,
                         Map.of("error", "ID session not found")));
 
-        if (!token.getUser().equals(user)) {
+        if (!Objects.equals(token.getUser().getId(), user.getId())) {
             throw new AccessDeniedException("Not your session");
         }
 
