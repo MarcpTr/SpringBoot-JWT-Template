@@ -34,7 +34,7 @@ import com.marcptr.jwt.exception.ResourceAlreadyExistsException;
 import com.marcptr.jwt.exception.ResourceNotFoundException;
 import com.marcptr.jwt.model.User;
 import com.marcptr.jwt.model.enums.ErrorCode;
-
+import com.marcptr.jwt.model.enums.AdminAuditAction;
 import java.util.UUID;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -47,6 +47,7 @@ public class AdminUserService {
         private final UserService userService;
         private final PasswordEncoder passwordEncoder;
         private final TokenService tokenService;
+        private final AdminAuditService adminAuditService;
 
         @Transactional(readOnly = true)
         public Page<AdminUserResponse> getUsers(
@@ -114,7 +115,13 @@ public class AdminUserService {
 
                 User savedUser = userRepository.save(user);
 
+                adminAuditService.log(
+                                AdminAuditAction.USER_CREATED,
+                                savedUser.getId(),
+                                savedUser.getUsername());
+
                 return AdminUserResponse.fromEntity(savedUser);
+
         }
 
         @Transactional
@@ -143,6 +150,11 @@ public class AdminUserService {
                 user.setEmail(email);
 
                 User updatedUser = userRepository.save(user);
+
+                adminAuditService.log(
+                                AdminAuditAction.USER_UPDATED,
+                                updatedUser.getId(),
+                                updatedUser.getUsername());
 
                 return AdminUserResponse.fromEntity(updatedUser);
         }
@@ -182,7 +194,10 @@ public class AdminUserService {
                 User updatedUser = userRepository.save(user);
 
                 tokenService.revokeAllUserTokens(updatedUser);
-
+                adminAuditService.log(
+                                AdminAuditAction.USER_ROLE_CHANGED,
+                                updatedUser.getId(),
+                                updatedUser.getUsername());
                 return AdminUserResponse.fromEntity(updatedUser);
         }
 
@@ -223,7 +238,12 @@ public class AdminUserService {
                 if (!newStatus) {
                         tokenService.revokeAllUserTokens(updatedUser);
                 }
-
+                adminAuditService.log(
+                                updatedUser.isEnabled()
+                                                ? AdminAuditAction.USER_ENABLED
+                                                : AdminAuditAction.USER_DISABLED,
+                                updatedUser.getId(),
+                                updatedUser.getUsername());
                 return AdminUserResponse.fromEntity(updatedUser);
         }
 
@@ -253,7 +273,10 @@ public class AdminUserService {
                 }
 
                 tokenService.revokeAllUserTokens(user);
-
+                adminAuditService.log(
+                                AdminAuditAction.USER_DELETED,
+                                user.getId(),
+                                user.getUsername());
                 tokenRepository.deleteAllByUser_Id(user.getId());
 
                 userRepository.delete(user);
