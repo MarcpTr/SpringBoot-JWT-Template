@@ -289,18 +289,32 @@ public class AdminUserService {
                 return tokenService.getActiveSessions(user);
         }
 
+        @Transactional
         public void revokeUserSession(UUID userId, UUID sessionId) {
+
                 User user = userRepository.findById(userId)
                                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND));
 
                 tokenService.revokeSessionForUser(user.getId(), sessionId);
+
+                adminAuditService.log(
+                                AdminAuditAction.SESSION_REVOKED,
+                                sessionId,
+                                user.getUsername());
         }
 
+        @Transactional
         public void revokeAllUserSessions(UUID userId) {
+
                 User user = userRepository.findById(userId)
                                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.USER_NOT_FOUND));
 
                 tokenService.revokeAllUserTokens(user);
+
+                adminAuditService.log(
+                                AdminAuditAction.USER_SESSIONS_REVOKED,
+                                user.getId(),
+                                user.getUsername());
         }
 
 }
