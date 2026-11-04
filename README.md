@@ -22,7 +22,6 @@ The project demonstrates:
 * **Maven**
 
 
-
 # Features
 
 ## Authentication & Authorization
