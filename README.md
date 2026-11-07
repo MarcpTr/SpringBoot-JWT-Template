@@ -20,7 +20,6 @@ The project demonstrates:
 * **Spring Data JPA**
 * **Maven**
 
-
 # Features
 
 ## Authentication & Authorization
